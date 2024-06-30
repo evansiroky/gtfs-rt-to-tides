@@ -1,0 +1,14 @@
+# Python virtual environment
+bin
+include
+lib
+pyvenv.cfg
+__pycache__
+
+# config files
+trip_download_config.json
+trip_parser_config.json
+
+# example saved data
+saved_data
+tides_output

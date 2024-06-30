@@ -1,0 +1,5 @@
+{
+  "polling_interval": 20,
+  "save_folder": "saved_data",
+  "url": "https://example.com/TripUpdates.pb"
+}
