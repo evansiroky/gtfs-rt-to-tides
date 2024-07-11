@@ -1,2 +1,5 @@
+gtfs-functions==2.5
 gtfs-realtime-bindings==1.0.0
+pytz==2024.1
 requests==2.32.3
+schedule==1.2.2

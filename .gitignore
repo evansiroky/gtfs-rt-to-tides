@@ -1,9 +1,15 @@
 # Python virtual environment
 bin
+etc
 include
 lib
 pyvenv.cfg
+share
+src
 __pycache__
+
+# IDEs
+.idea
 
 # config files
 trip_download_config.json

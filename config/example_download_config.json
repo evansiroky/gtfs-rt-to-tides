@@ -1,0 +1,17 @@
+{
+  "save_folder": "saved_data",
+  "feeds": {
+    "Example_Feed_1": {
+      "schedule_url": "https://example1.com/gtfs.zip",
+      "service_alerts_url": "https://example1.com/service-alerts.pb",
+      "trip_updates_url": "https://example1.com/trip-updates.pb",
+      "vehicle_positions_url": "https://example1.com/vehicle-positions.pb"
+    },
+    "Example_Feed_2": {
+      "schedule_url": "https://example2.com/gtfs.zip",
+      "service_alerts_url": "https://example2.com/service-alerts.pb",
+      "trip_updates_url": "https://example2.com/trip-updates.pb",
+      "vehicle_positions_url": "https://example2.com/vehicle-positions.pb"
+    }
+  }
+}
