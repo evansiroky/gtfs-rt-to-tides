@@ -13,22 +13,26 @@ import requests
 import schedule
 import pytz
 
+# create logging config before importing gtfs_functions
+logging.basicConfig(
+    format='%(levelname)s %(asctime)s %(filename)s:%(lineno)d| %(message)s',
+    level=logging.INFO
+)
+logger = logging.getLogger(__name__)
+
 from gtfs_functions import Feed
 from utils import create_folder, load_config
 
-
-feeds = {}
-save_folder = 'saved_data'
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(threadName)s - %(levelname)s - %(message)s',
-    datefmt='%Y-%m-%d %H:%M:%S'
-)
-
+# constants
 RT_URLS = ['service_alerts_url', 'trip_updates_url', 'vehicle_positions_url']
 
+# globals
+global_feeds = {}
+global_save_folder = 'saved_data'
+
+
 def download_file(url, save_filename):
-    logging.info(f"Downloading from {url}")
+    logger.info(f"Downloading from {url}")
     try:
         response = requests.get(url, stream=True)
         response.raise_for_status()  # Check if the request was successful
@@ -37,31 +41,33 @@ def download_file(url, save_filename):
             for chunk in response.iter_content(chunk_size=8192):
                 file.write(chunk)
 
-        logging.info(f"File saved successfully to {save_filename}")
+        logger.info(f"File saved successfully to {save_filename}")
     except requests.exceptions.RequestException as e:
-        logging.error(f"Failed to download from URL ({url}): {e}")
+        logger.error(f"Failed to download from URL ({url}): {e}")
 
 
 def download_and_process_config():
-    global feeds, save_folder
-    config = load_config('downloader.py')
-    save_folder = config['save_folder']
-    create_folder(save_folder)
+    global global_feeds, global_save_folder
 
-    found_feeds = set()
+    logger.info('downloading and processing config')
+    config = load_config('downloader.py')
+    global_save_folder = config['save_folder']
+    create_folder(global_save_folder)
+
+    found_feed_names = set()
     fetch_timezones = set()
 
-    for feed_config in feeds.values():
+    for feed_config in global_feeds.values():
         fetch_timezones.add(feed_config['timezone'])
 
     for name, urls in config['feeds'].items():
-        found_feeds.add(name)
-        if name not in feeds:
-            logging.info(f"Processing new feed: {name}")
-            feeds[name] = {}
+        found_feed_names.add(name)
+        if name not in global_feeds:
+            logger.info(f"Processing new feed: {name}")
+            global_feeds[name] = {}
 
             # create feed save folder
-            feed_save_folder = os.path.join(save_folder, name)
+            feed_save_folder = os.path.join(global_save_folder, name)
             create_folder(feed_save_folder)
 
             # download initial schedule feed
@@ -70,40 +76,43 @@ def download_and_process_config():
 
             # add feed to the timezone the first agency is associated with
             feed = Feed(initial_gtfs_schedule_path)
-            print(feed.agency[0])
-            sys.exit()
-            agency_timezone = feed.agency[0].agency_timezone
-            print(agency_timezone)
-            feeds[name]['timezone'] = agency_timezone
+            agency_timezone = feed.agency.at[0, 'agency_timezone']
+            global_feeds[name]['timezone'] = agency_timezone
 
             if agency_timezone not in fetch_timezones:
                 # schedule
-                schedule.every().day.at('2:30', agency_timezone).do(
+                schedule.every().day.at('02:30', agency_timezone).do(
                     download_schedule_files_for_timezone, timezone=agency_timezone)
                 fetch_timezones.add(agency_timezone)
 
             # copy initial file to appropriate date folder
-            current_date = datetime.now(pytz.timezone(agency_timezone)).date()
-            schedule_folder = os.path.join(feed_save_folder, current_date, 'schedule')
+            now = datetime.now(pytz.timezone(agency_timezone))
+            schedule_folder = os.path.join(feed_save_folder, f"{now:%Y-%m-%d}", 'schedule')
             create_folder(schedule_folder)
             shutil.copy(initial_gtfs_schedule_path, os.path.join(schedule_folder, 'gtfs.zip'))
+            logger.info(f"Finished processing new feed: {name}")
 
-        feeds[name]['urls'] = urls
+        global_feeds[name]['urls'] = urls
 
     # remove feeds no longer present
-    for feed_name in feeds.keys():
-        if feed_name not in found_feeds:
-            del feeds[feed_name]
+    for feed_name in global_feeds.keys():
+        if feed_name not in found_feed_names:
+            logger.info(f"Removing feed: {feed_name}")
+            del global_feeds[feed_name]
+
+    logger.info('Finished processing config')
     
 
 def download_rt_files():
-    global feeds, save_folder
+    global global_feeds, global_save_folder
 
-    for name, feed_config in feeds.items():
+    logger.info('Begin downloading rt files')
+
+    for name, feed_config in global_feeds.items():
         now = datetime.now(pytz.timezone(feed_config['timezone']))
-        formatted_request_time = f"{now:%Y-%m-%d-%H-%M-%S}"
-        feed_date = now.date()
-        feed_date_save_folder = os.path.join(save_folder, name, feed_date)
+        # add timestamp to account for daylight savings time transitions
+        formatted_request_time = f"{int(now.timestamp())}-{now:%Y-%m-%d-%H-%M-%S}"
+        feed_date_save_folder = os.path.join(global_save_folder, name, f"{now:%Y-%m-%d}")
 
         for url_type in RT_URLS:
             if url_type in feed_config['urls']:
@@ -114,23 +123,29 @@ def download_rt_files():
                     os.path.join(feed_date_url_type_save_folder, f"{formatted_request_time}.pb")
                 )
 
+    logger.info('Finished downloading rt files')
+
 
 def download_schedule_files_for_timezone(timezone):
-    global feeds, save_folder
+    global global_feeds, global_save_folder
+
+    logger.info('Begin downloading schedule files')
 
     now = datetime.now(pytz.timezone(timezone))
-    feed_date = now.date()
+    feed_date = f"{now:%Y-%m-%d}"
 
-    for name, feed_config in feeds.items():
+    for name, feed_config in global_feeds.items():
         if feed_config['timezone'] != timezone:
             continue
 
-        feed_date_url_type_save_folder = os.path.join(save_folder, name, feed_date, 'schedule')
+        feed_date_url_type_save_folder = os.path.join(global_save_folder, name, feed_date, 'schedule')
         create_folder(feed_date_url_type_save_folder)
         download_file(
             feed_config['urls']['schedule'],
             os.path.join(feed_date_url_type_save_folder, 'gtfs.zip')
         )
+
+    logger.info('Finished downloading schedule files')
 
 
 def main():

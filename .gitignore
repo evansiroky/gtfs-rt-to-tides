@@ -12,8 +12,9 @@ __pycache__
 .idea
 
 # config files
-trip_download_config.json
-trip_parser_config.json
+config/*
+!config/example_download_config.json
+!config/example_trip_parser_config.json
 
 # example saved data
 saved_data
