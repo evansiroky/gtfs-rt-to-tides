@@ -34,7 +34,7 @@ global_save_folder = 'saved_data'
 def download_file(url, save_filename):
     logger.info(f"Downloading from {url}")
     try:
-        response = requests.get(url, stream=True)
+        response = requests.get(url, timeout=10, stream=True)
         response.raise_for_status()  # Check if the request was successful
 
         with open(save_filename, 'wb') as file:
@@ -141,7 +141,7 @@ def download_schedule_files_for_timezone(timezone):
         feed_date_url_type_save_folder = os.path.join(global_save_folder, name, feed_date, 'schedule')
         create_folder(feed_date_url_type_save_folder)
         download_file(
-            feed_config['urls']['schedule'],
+            feed_config['urls']['schedule_url'],
             os.path.join(feed_date_url_type_save_folder, 'gtfs.zip')
         )
 
