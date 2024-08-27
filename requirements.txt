@@ -1,4 +1,4 @@
-gtfs-functions==2.5
+gtfs_kit==6.1.1
 gtfs-realtime-bindings==1.0.0
 pytz==2024.1
 requests==2.32.3

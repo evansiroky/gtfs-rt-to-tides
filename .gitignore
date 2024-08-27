@@ -11,10 +11,13 @@ __pycache__
 # IDEs
 .idea
 
+# MacOS
+.DS_Store
+
 # config files
 config/*
 !config/example_download_config.json
-!config/example_trip_parser_config.json
+!config/example_vehicle_locations_parser_config.json
 
 # example saved data
 saved_data

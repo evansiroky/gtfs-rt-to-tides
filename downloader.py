@@ -4,24 +4,22 @@
 import logging
 import os
 import shutil
-import sys
 import time
 
 from datetime import datetime
 
+import gtfs_kit
 import requests
 import schedule
 import pytz
 
-# create logging config before importing gtfs_functions
+from utils import create_folder, load_config
+
 logging.basicConfig(
     format='%(levelname)s %(asctime)s %(filename)s:%(lineno)d| %(message)s',
     level=logging.INFO
 )
 logger = logging.getLogger(__name__)
-
-from gtfs_functions import Feed
-from utils import create_folder, load_config
 
 # constants
 RT_URLS = ['service_alerts_url', 'trip_updates_url', 'vehicle_positions_url']
@@ -75,7 +73,8 @@ def download_and_process_config():
             download_file(urls['schedule_url'], initial_gtfs_schedule_path)
 
             # add feed to the timezone the first agency is associated with
-            feed = Feed(initial_gtfs_schedule_path)
+            feed = gtfs_kit.read_feed(initial_gtfs_schedule_path, 'm')
+
             agency_timezone = feed.agency.at[0, 'agency_timezone']
             global_feeds[name]['timezone'] = agency_timezone
 

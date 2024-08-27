@@ -2,11 +2,13 @@ import json
 import os
 import sys
 
+
 def create_folder(folder_name):
     try:
         os.makedirs(folder_name)
     except:
         pass
+
 
 def load_config(callable_filname):
     if len(sys.argv) != 2:
