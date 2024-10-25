@@ -10,9 +10,9 @@ def create_folder(folder_name):
         pass
 
 
-def load_config(callable_filname):
+def load_config(callable_filename):
     if len(sys.argv) != 2:
-        print(f"Usage: python {callable_filname} <path_to_config>")
+        print(f"Usage: python {callable_filename} <path_to_config>")
         sys.exit(1)
     with open(sys.argv[1], 'r') as f:
         return json.load(f)

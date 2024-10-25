@@ -20,7 +20,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-VEHICLE_POSITIONS_HEADER = [
+VEHICLE_LOCATIONS_HEADER = [
     'location_ping',
     'service_date',
     'event_timestamp',
@@ -101,7 +101,7 @@ def write_row(analysis_date_str, writer, ping_id, vehicle, trip_ids_on_analysis_
 
 def main():
     script_start_time = time.time()
-    config = load_config('parse_for_day.py')
+    config = load_config('parse_vehicle_positions_for_day.py')
     raw_data_folder = config['raw_data_path']
     analysis_date_str = config['date']
     gtfs_kit_analysis_date = analysis_date_str.replace('-', '')
@@ -163,7 +163,7 @@ def main():
         writer = csv.writer(file)
 
         # write header
-        writer.writerow(VEHICLE_POSITIONS_HEADER)
+        writer.writerow(VEHICLE_LOCATIONS_HEADER)
 
         for rt_file in files:
             # open rt file
@@ -199,6 +199,7 @@ def main():
 
     script_end_time = time.time()
     script_elapsed_time = script_end_time - script_start_time
+    logger.info(f"Finished analyzing vehicle data, found {num_pings} total pings")
     logger.info(f"Parsing data for {analysis_date_str} took {script_elapsed_time:.4f} seconds")
 
 
